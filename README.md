@@ -56,9 +56,11 @@ Incongruent trials produced **slower reaction times and higher error rates** tha
 cognitive-control-flanker/
 │
 ├── README.md
-├── flanker_analysis.Rmd        ← Annotated R Markdown analysis
-├── flanker_task.csv            ← Raw data (long format)
-└── flank_wide.csv              ← Processed data (wide format, exported)
+├── analysis/
+│   └── flanker_analysis.Rmd    ← Annotated R Markdown analysis
+└── data/
+    ├── flanker_task.csv         ← Raw data (long format)
+    └── flank_wide.csv           ← Processed data (wide format, exported)
 ```
 
 ---
