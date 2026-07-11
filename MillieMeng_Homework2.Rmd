@@ -1,0 +1,240 @@
+---
+title: "Homework 2"
+author: "Psych 300"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Flanker Task
+
+### What is the Flanker Task?
+
+The Flanker Task ([originally developed by Eriksen and Eriksen, 1974](https://doi.org/10.3758/BF03203267)) is used to assess an individual's ability to focus and inhibit responses in the presence of distracting information. It typically involves displaying a series of arrows (or other stimuli) on a screen, where the participant must identify the direction of a central target arrow while ignoring flanking arrows that may either point in the same direction (**congruent**, e.g., \>\>\>\>\>) or a different direction (**incongruent**, e.g., \>\>\<\>\>).
+
+![](https://www.testable.org/wp-content/uploads/2022/11/flanker_noFrame-1536x893.png){width="662"}
+
+This task helps researchers study attention, cognitive control, and the effects of distractions on performance. The difference in reaction times and error rates between congruent and incongruent trials provides insights into how well an individual can maintain focus and suppress interference.
+
+That is, this data set has two *dependent variables*:
+
+1.  `result`: whether the participant's response was "correct" or "incorrect"
+2.  `rt`: how long it took the participant to respond
+
+This data has two *independent variables*:
+
+1.  `congruency`: whether the flanks were "congruent" or "incongruent" with the center value
+2.  `group`: whether the task was performed by healthy participants ("control" group) or by participants with a specific medical condition ("test" group).
+
+There is also a fifth column `subject` that contains the participant id variable.
+
+### Working with the data.
+
+#### Step 1. Import the data set "flanker.csv" into R.
+
+You can find the data set on Brightspace.
+
+```{r}
+# your code
+library(tidyverse)
+
+flank_data <- read_csv("flanker_task.csv")
+```
+
+#### Step 2. Visualize the data.
+
+In this assignment, you will be making several plots. These plots should be print-ready plots. That means for each plot, you will need to:
+
+1.  **Select an appropriate plot.** There generally isn't one right answer, but some plot types are completely inappropriate for certain types of data (e.g., histogram for categorical data). For help selecting plots, see <https://www.data-to-viz.com/> and <https://r-graph-gallery.com/>.
+2.  **Create appropriate labels for your plot.**
+3.  **Make your plot visually appealing** (e.g., select a theme, change the `fill` and `color` options, etc.)
+4.  **Assign appropriate ranges and breaks for each axis** (i.e., the default may not always be the best)
+5.  **For histograms, assign an appropriate bin width.** There isn't a strict right or wrong way to do this, but consider having a bin width equal to a meaningful unit in the data (e.g., bin width = 1 for Likert scale data) or that otherwise doesn't hide the patterns in the data (i.e., a bin width that captures too much or too little data). There's more formal statistical rules for determining bins (e.g., Sturges method) but these require a bit more work to implement in `ggplot()` (e.g., <https://r-charts.com/distribution/histogram-sturges-ggplot2/>).
+
+Create a plot displaying the distribution of reaction times.
+
+```{r}
+
+# your code
+ggplot(data = flank_data) +
+  geom_histogram(aes(x = rt), 
+                 fill = "skyblue", 
+                 color = "white",
+                 binwidth = 0.05) +
+  theme_classic() +
+  labs(x = "Reaction Time (seconds)",
+       y = "Count",
+       title = "Distribution of Reaction Times")
+
+```
+
+Create a plot visualizing the distribution of reaction time scores as a function of whether it was congruent or incongruent trials.
+
+```{r}
+# your code
+ggplot(data = flank_data) +
+  geom_histogram(aes(x = rt, fill = congruency),
+                 color = "white",
+                 binwidth = 0.05,
+                 position = "identity",
+                 alpha = 0.6) +
+  theme_classic() +
+  labs(x = "Reaction Time (seconds)",
+       y = "Count",
+       title = "Reaction Time by Congruency",
+       fill = "Congruency")
+```
+
+Create a plot visualizing the distribution of reaction time scores as a function of whether the participant responded correctly or not.
+
+```{r}
+# your code
+ggplot(data = flank_data) +
+  geom_histogram(aes(x = rt, fill = result),
+                 color = "white",
+                 binwidth = 0.05,
+                 position = "identity",
+                 alpha = 0.6) +
+  theme_classic() +
+  labs(x = "Reaction Time (seconds)",
+       y = "Count",
+       title = "Reaction Time by Response Accuracy",
+       fill = "Result")
+```
+
+Create a plot looking at reaction time as a function of whether the participant responded correctly AND on trial type (i.e., congruent or not). You should filter out the "timeout" data before plotting.
+
+```{r}
+# your code
+flank_data %>%
+  filter(result != "timeout") %>%
+  ggplot() +
+  geom_histogram(aes(x = rt, fill = congruency),
+                 color = "white",
+                 binwidth = 0.05,
+                 position = "identity",
+                 alpha = 0.6) +
+  facet_wrap(~ result) +
+  theme_classic() +
+  labs(x = "Reaction Time (seconds)",
+       y = "Count",
+       title = "Reaction Time by Accuracy and Congruency",
+       fill = "Congruency")
+```
+
+<div>
+
+**What do you think?** Looking at the graphs above, what patterns do you notice in the data. Write your thoughts below.
+
+</div>
+
+In all plots, incongruent trials typically have slower reaction times than congruent trials, which is consistent with the flanker effect. Incorrect responses are uncommon, but they happen more often in incongruent trials. This suggests that conflicting flankers raise both response time and error rate.
+
+#### Step 3. Convert `flank_data` to from long to wide format.
+
+Create and store a new version of `flank_data` that converts the data from long to wide format. Before converting from long to wide format, remove the `result` column.
+
+**Hint**: when making the column names for the new dataset, it'll help to combine the columns `congruency` and `trial` into one column first. The `unite()` function can help with this.
+
+Your final data set will look something like this:
+
+| subject | group | incongruent_1 | incongruent_2 | incongruent_3 | etc... |
+|---------|-------|---------------|---------------|---------------|--------|
+| 1       |       |               |               |               |        |
+| 2       |       |               |               |               |        |
+
+```{r}
+# your code
+flank_wide <- flank_data %>%
+  select(-result) %>%
+  unite(condition_trial, congruency, trial) %>%
+  pivot_wider(names_from = condition_trial,
+              values_from = rt)
+```
+
+#### Step 4. Compute individual averages.
+
+Create two new columns in your wide dataset that reflect each participant's average reaction time across congruent and incongruent trials.
+
+-   `congruent_avg` should have each individual's average reaction time across all [congruent]{.underline} trials
+
+-   `incongruent_avg` should have each individual's average reaction time across all [incongruent]{.underline} trials
+
+```{r}
+# your code
+flank_wide <- flank_wide %>%
+  mutate(
+    congruent_avg = rowMeans(select(., starts_with("congruent_")), na.rm = TRUE),
+    incongruent_avg = rowMeans(select(., starts_with("incongruent_")), na.rm = TRUE)
+  )
+```
+
+#### Step 5. Join data sets.
+
+Let's add the two columns you just created back into the long format dataset. To do this, you will want to take just the three columns `subject`, `congruent_avg`, and `incongruent_avg` from your wide dataset and join them with the long dataset.
+
+```{r}
+# your code
+avg_data <- flank_wide %>%
+  select(subject, congruent_avg, incongruent_avg)
+
+flank_data <- left_join(flank_data, avg_data, by = "subject")
+```
+
+Let's say we had some additional demographic data on our participants.
+
+```{r}
+# don't touch this code 
+set.seed(11)
+demo_data <- data.frame(
+  id = sample(c(1:45), 42),
+  gender = sample(c("Male", "Female"), 42, replace = TRUE)
+)
+```
+
+Use one of the `join()` functions to create a list of participants that you have missing demographic data.
+
+You should end up with a single data frame that has only one column: a list of subject numbers for those that have no demo data.
+
+```{r}
+# your code
+missing_demo <- flank_wide %>%
+  select(subject) %>%
+  anti_join(demo_data, by = c("subject" = "id"))
+```
+
+#### Step 6. Get basic descriptive statistics.
+
+Compute the average reaction time for congruent and incongruent trials.
+
+```{r}
+# your code
+flank_data %>%
+  group_by(congruency) %>%
+  summarize(avg_rt = mean(rt, na.rm = TRUE))
+```
+
+Compute the average correct responses for congruent and incongruent trials.
+
+```{r}
+# your code
+flank_data %>%
+  filter(result != "timeout") %>%
+  group_by(congruency) %>%
+  summarize(avg_correct = mean(result == "correct"))
+```
+
+#### Step 7. Export your wide flank data set.
+
+Write a line of code that exports your wide data set to a .csv file.
+
+*Note*: when you knit you file, this code chunk won't run.
+
+```{r, eval=FALSE}
+# your code
+write_csv(flank_wide, "flank_wide.csv")
+```
